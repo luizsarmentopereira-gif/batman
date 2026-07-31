@@ -32,7 +32,7 @@ scroll_speed = 5
 game_state = MENU
 selected_option = 0  # 0: Iniciar, 1: Instruções, 2: Sair
 
-# --- CARREGAMENTO DO CENÁRIO (agora na pasta "cenarios") ---
+# --- CARREGAMENTO DO CENÁRIO (fundo do jogo) ---
 try:
     background_img = pygame.image.load(os.path.join("cenarios", "background.png")).convert_alpha()
 except FileNotFoundError:
@@ -41,6 +41,15 @@ except FileNotFoundError:
     except FileNotFoundError:
         background_img = pygame.Surface((WIDTH, HEIGHT))
         background_img.fill((40, 40, 60))
+
+# --- CARREGAMENTO DA IMAGEM DO MENU (fundo personalizado) ---
+try:
+    menu_img = pygame.image.load(os.path.join("cenarios", "menu_iniciar.png")).convert_alpha()
+    menu_img = pygame.transform.scale(menu_img, (WIDTH, HEIGHT))
+except FileNotFoundError:
+    # Fallback: usa o background escurecido
+    menu_img = pygame.Surface((WIDTH, HEIGHT))
+    menu_img.fill((20, 20, 30))
 
 # ---------------- IMAGENS DO PERSONAGEM ----------------
 def load_images(folder, prefix, count):
@@ -169,11 +178,13 @@ class Batman:
 
 # ---------------- FUNÇÕES DO MENU ----------------
 def desenha_menu():
-    # Fundo (escurecido)
+    # Fundo personalizado
+    screen.blit(menu_img, (0, 0))
+
+    # Overlay semi-transparente para melhor legibilidade
     overlay = pygame.Surface((WIDTH, HEIGHT))
-    overlay.set_alpha(180)
+    overlay.set_alpha(150)
     overlay.fill((0, 0, 0))
-    screen.blit(background_img, (0, 0))
     screen.blit(overlay, (0, 0))
 
     # Título
@@ -200,11 +211,12 @@ def desenha_menu():
     screen.blit(rodape, rodape_rect)
 
 def desenha_instrucoes():
-    # Fundo escurecido
+    # Fundo personalizado (mesma imagem do menu)
+    screen.blit(menu_img, (0, 0))
+
     overlay = pygame.Surface((WIDTH, HEIGHT))
-    overlay.set_alpha(200)
+    overlay.set_alpha(180)
     overlay.fill((0, 0, 0))
-    screen.blit(background_img, (0, 0))
     screen.blit(overlay, (0, 0))
 
     titulo = font_title.render("INSTRUÇÕES", True, (255, 215, 0))
@@ -216,7 +228,8 @@ def desenha_instrucoes():
         "→ / D  -> Andar para direita",
         "↑ / Espaço -> Pular",
         "S      -> Agachar",
-        "P      -> Socar"
+        "P      -> Socar",
+        "ESC    -> Voltar ao menu (durante o jogo)"
     ]
 
     for i, linha in enumerate(controles):
@@ -250,7 +263,7 @@ while running:
                 elif event.key == pygame.K_RETURN:
                     if selected_option == 0:  # Iniciar
                         game_state = JOGANDO
-                        # Resetar posição do Batman e offset ao iniciar o jogo
+                        # Resetar posição do Batman e offset
                         batman.rect.bottomleft = (250, GROUND_Y)
                         batman.vel_y = 0
                         bg_offset = 0
@@ -265,7 +278,6 @@ while running:
                     game_state = MENU
 
         elif game_state == JOGANDO:
-            # Eventos do jogo
             if event.type == pygame.KEYDOWN:
                 if event.key in [pygame.K_UP, pygame.K_SPACE, pygame.K_w]:
                     if batman.rect.bottom >= GROUND_Y:
@@ -273,7 +285,6 @@ while running:
                 if event.key == pygame.K_p:
                     batman.hold_punch = True
                     batman.punch_start()
-                # Tecla ESC para voltar ao menu durante o jogo
                 if event.key == pygame.K_ESCAPE:
                     game_state = MENU
 
